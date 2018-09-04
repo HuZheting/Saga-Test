@@ -116,7 +116,7 @@ public class CompensableInterceptorTest {
 
   @Test
   public void sendsTxAbortedEventOnError() throws Exception {
-    interceptor.onError(parentTxId, compensationMethod, new RuntimeException("oops"));
+    interceptor.onError(parentTxId, compensationMethod, new RuntimeException("oops"), 0);
 
     TxEvent event = messages.get(0);
 

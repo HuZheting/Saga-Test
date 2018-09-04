@@ -51,6 +51,9 @@ public class TxEvent {
   private int retries;
   private byte[] payloads;
 
+  private boolean findStatus;
+  private boolean isTimeout;
+
   private TxEvent() {
   }
 
@@ -67,7 +70,9 @@ public class TxEvent {
         event.expiryTime,
         event.retryMethod,
         event.retries,
-        event.payloads);
+        event.payloads,
+        event.findStatus,
+        event.isTimeout);
   }
 
   public TxEvent(
@@ -134,7 +139,9 @@ public class TxEvent {
         timeout == 0 ? new Date(MAX_TIMESTAMP) : new Date(creationTime.getTime() + SECONDS.toMillis(timeout)),
         retryMethod,
         retries,
-        payloads);
+        payloads,
+        false,
+        false);
   }
 
   TxEvent(Long surrogateId,
@@ -149,7 +156,9 @@ public class TxEvent {
       Date expiryTime,
       String retryMethod,
       int retries,
-      byte[] payloads) {
+      byte[] payloads,
+      boolean findStatus,
+      boolean isTimeout) {
     this.surrogateId = surrogateId;
     this.serviceName = serviceName;
     this.instanceId = instanceId;
@@ -163,6 +172,8 @@ public class TxEvent {
     this.retryMethod = retryMethod;
     this.retries = retries;
     this.payloads = payloads;
+    this.findStatus = findStatus;
+    this.isTimeout = isTimeout;
   }
 
   public String serviceName() {
@@ -217,6 +228,21 @@ public class TxEvent {
     return retries;
   }
 
+  public boolean findStatus() {
+    return findStatus;
+  }
+
+  public boolean isTimeout() {
+    return isTimeout;
+  }
+
+  public void setFindStatusTrue(){
+    findStatus = true;
+  }
+
+  public void setIsTimeoutTrue(){
+    isTimeout = true;
+  }
   @Override
   public String toString() {
     return "TxEvent{" +

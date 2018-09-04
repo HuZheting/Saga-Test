@@ -50,8 +50,8 @@ class SagaStartAnnotationProcessor implements EventAwareInterceptor {
   }
 
   @Override
-  public void onError(String parentTxId, String compensationMethod, Throwable throwable) {
+  public void onError(String parentTxId, String compensationMethod, Throwable throwable, int retries) {
     String globalTxId = omegaContext.globalTxId();
-    sender.send(new TxAbortedEvent(globalTxId, omegaContext.localTxId(), null, compensationMethod, throwable));
+    sender.send(new TxAbortedEvent(globalTxId, omegaContext.localTxId(), null, compensationMethod, throwable, retries));
   }
 }

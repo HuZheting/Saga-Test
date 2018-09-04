@@ -71,7 +71,7 @@ public class DefaultRecovery implements RecoveryPolicy {
 
       return result;
     } catch (Throwable throwable) {
-      interceptor.onError(parentTxId, compensationSignature, throwable);
+      interceptor.onError(parentTxId, compensationSignature, throwable, retries);
       throw throwable;
     }
   }

@@ -26,8 +26,8 @@ public class TxAbortedEvent extends TxEvent {
 
   private static final int PAYLOADS_MAX_LENGTH = 10240;
 
-  public TxAbortedEvent(String globalTxId, String localTxId, String parentTxId, String compensationMethod, Throwable throwable) {
-    super(EventType.TxAbortedEvent, globalTxId, localTxId, parentTxId, compensationMethod, 0, "", 0,
+  public TxAbortedEvent(String globalTxId, String localTxId, String parentTxId, String compensationMethod, Throwable throwable, int retries) {
+    super(EventType.TxAbortedEvent, globalTxId, localTxId, parentTxId, compensationMethod, 0, "", retries,
         stackTrace(throwable));
   }
 

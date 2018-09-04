@@ -30,7 +30,7 @@ public interface EventAwareInterceptor {
     }
 
     @Override
-    public void onError(String parentTxId, String compensationMethod, Throwable throwable) {
+    public void onError(String parentTxId, String compensationMethod, Throwable throwable, int retries) {
     }
   };
 
@@ -39,5 +39,5 @@ public interface EventAwareInterceptor {
 
   void postIntercept(String parentTxId, String compensationMethod);
 
-  void onError(String parentTxId, String compensationMethod, Throwable throwable);
+  void onError(String parentTxId, String compensationMethod, Throwable throwable, int retries);
 }

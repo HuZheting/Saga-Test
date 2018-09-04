@@ -75,6 +75,14 @@ interface TxEventEnvelopeRepository extends CrudRepository<TxEvent, Long> {
       + "    AND t1.type IN ('TxStartedEvent', 'SagaStartedEvent') ) = 0 ")
   List<TxEvent> findByEventGlobalTxIdAndEventType(String globalTxId, String type);
 
+  @Query("SELECT DISTINCT new org.apache.servicecomb.saga.alpha.core.TxEvent("
+          + "t.serviceName, t.instanceId, t.globalTxId, t.localTxId, t.parentTxId, "
+          + "t.type, t.compensationMethod, t.payloads "
+          + ") FROM TxEvent t "
+          + "WHERE t.globalTxId = ?1 AND t.type = 'TxAbortedEvent' "
+          + "AND t.retries = 0 ")
+  List<TxEvent> findIsGlobalAbortByGlobalTxId(String globalTxId);
+
   @Query("SELECT t FROM TxEvent t "
       + "WHERE t.globalTxId = ?1 AND t.type = 'TxStartedEvent' AND EXISTS ( "
       + "  SELECT t1.globalTxId"
@@ -91,27 +99,6 @@ interface TxEventEnvelopeRepository extends CrudRepository<TxEvent, Long> {
       + "ORDER BY t.surrogateId ASC")
   List<TxEvent> findStartedEventsWithMatchingEndedButNotCompensatedEvents(String globalTxId);
 
-  @Query("SELECT t FROM TxEvent t "
-      + "WHERE t.type = ?1 AND t.surrogateId > ?2 AND EXISTS ( "
-      + "  SELECT t1.globalTxId FROM TxEvent t1 "
-      + "  WHERE t1.globalTxId = t.globalTxId "
-      + "    AND t1.type = 'TxAbortedEvent' AND NOT EXISTS ( "
-      + "    SELECT t2.globalTxId FROM TxEvent t2 "
-      + "    WHERE t2.globalTxId = t1.globalTxId "
-      + "      AND t2.localTxId = t1.localTxId "
-      + "      AND t2.type = 'TxStartedEvent' "
-      + "      AND t2.creationTime > t1.creationTime)) AND NOT EXISTS ( "
-      + "  SELECT t3.globalTxId FROM TxEvent t3 "
-      + "  WHERE t3.globalTxId = t.globalTxId "
-      + "    AND t3.localTxId = t.localTxId "
-      + "    AND t3.type = 'TxCompensatedEvent') AND ( "
-      + "  SELECT MIN(t4.retries) FROM TxEvent t4 "
-      + "  WHERE t4.globalTxId = t.globalTxId "
-      + "    AND t4.localTxId = t.localTxId "
-      + "    AND t4.type = 'TxStartedEvent' ) = 0 "
-      + "ORDER BY t.surrogateId ASC")
-  List<TxEvent> findFirstByTypeAndSurrogateIdGreaterThan(String type, long surrogateId, Pageable pageable);
-
   Optional<TxEvent> findFirstByTypeAndSurrogateIdGreaterThan(String type, long surrogateId);
 
   @Transactional
@@ -123,4 +110,14 @@ interface TxEventEnvelopeRepository extends CrudRepository<TxEvent, Long> {
       + " GROUP BY t1.globalTxId"
       + ")")
   void deleteByType(String type);
+
+  @Transactional
+  @Query("UPDATE TxEvent t SET t.findStatus = true " +
+          "WHERE t.surrogateId = ?1")
+  void updateFindStatusTrue(long surrogateId);
+
+  @Transactional
+  @Query("UPDATE TxEvent t SET t.isTimeout = true " +
+          "WHERE t.surrogateId = ?1")
+  void updateIsTimeoutTrue(long surrogateId);
 }

@@ -69,7 +69,7 @@ public class ForwardRecovery extends DefaultRecovery {
       String errorMessage = "Failed to handle tx because it is interrupted, global tx id: " + context.globalTxId()
           + ", local tx id: " + context.localTxId() + ", method: " + method.toString();
       LOG.error(errorMessage);
-      interceptor.onError(parentTxId, compensationMethodSignature(joinPoint, compensable, method), e);
+      interceptor.onError(parentTxId, compensationMethodSignature(joinPoint, compensable, method), e, retries);
       throw new OmegaException(errorMessage);
     }
   }

@@ -99,11 +99,11 @@ public class Command {
         event.payloads());
   }
 
-  String serviceName() {
+  public String serviceName() {
     return serviceName;
   }
 
-  String instanceId() {
+  public String instanceId() {
     return instanceId;
   }
 
@@ -123,7 +123,7 @@ public class Command {
     return compensationMethod;
   }
 
-  byte[] payloads() {
+  public byte[] payloads() {
     return payloads;
   }
 

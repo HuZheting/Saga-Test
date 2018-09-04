@@ -60,7 +60,7 @@ public class SagaStartAspect {
     } catch (Throwable throwable) {
       // We don't need to handle the OmegaException here
       if (!(throwable instanceof OmegaException)) {
-        sagaStartAnnotationProcessor.onError(context.globalTxId(), method.toString(), throwable);
+        sagaStartAnnotationProcessor.onError(context.globalTxId(), method.toString(), throwable, 0);
         LOG.error("Transaction {} failed.", context.globalTxId());
       }
       throw throwable;

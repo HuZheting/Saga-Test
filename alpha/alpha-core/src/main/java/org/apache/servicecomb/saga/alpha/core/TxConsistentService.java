@@ -17,16 +17,15 @@
 
 package org.apache.servicecomb.saga.alpha.core;
 
-import static org.apache.servicecomb.saga.common.EventType.SagaEndedEvent;
-import static org.apache.servicecomb.saga.common.EventType.TxAbortedEvent;
-import static org.apache.servicecomb.saga.common.EventType.TxStartedEvent;
-
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.BlockingDeque;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.apache.servicecomb.saga.common.EventType.*;
 
 public class TxConsistentService {
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -35,23 +34,44 @@ public class TxConsistentService {
 
   private final List<String> types = Arrays.asList(TxStartedEvent.name(), SagaEndedEvent.name());
 
-  public TxConsistentService(TxEventRepository eventRepository) {
+  private BlockingDeque<TxEvent> abortEventsDeque;
+  private BlockingDeque<Command> commandsDeque;
+
+  public TxConsistentService(TxEventRepository eventRepository,
+                             BlockingDeque<TxEvent> abortEventsDeque,
+                             BlockingDeque<Command> commandsDeque) {
     this.eventRepository = eventRepository;
+    this.abortEventsDeque = abortEventsDeque;
+    this.commandsDeque = commandsDeque;
   }
 
   public boolean handle(TxEvent event) {
+    System.out.println(event.type() + " " + event.localTxId());
     if (types.contains(event.type()) && isGlobalTxAborted(event)) {
       LOG.info("Transaction event {} rejected, because its parent with globalTxId {} was already aborted",
           event.type(), event.globalTxId());
       return false;
     }
-
-    eventRepository.save(event);
+    else if(event.type().equals(TxAbortedEvent.name())){
+      LOG.info("Add abort event into abortEventDeque event {}", event);
+      abortEventsDeque.add(event);
+    }
+    else{
+        if(event.type().equals(TxEndedEvent.name()) && isGlobalTxAbortedAndRetriesIsZero(event.globalTxId())){
+            LOG.info("Find Uncompensate TxEndedEvent!");
+            commandsDeque.add(new Command(event));
+        }
+        eventRepository.save(event);
+    }
 
     return true;
   }
 
   private boolean isGlobalTxAborted(TxEvent event) {
     return !eventRepository.findTransactions(event.globalTxId(), TxAbortedEvent.name()).isEmpty();
+  }
+
+  private boolean isGlobalTxAbortedAndRetriesIsZero(String globalTxId){
+    return !eventRepository.findIsGlobalAbortByGlobalTxId(globalTxId).isEmpty();
   }
 }

@@ -50,18 +50,8 @@ class SpringTxEventRepository implements TxEventRepository {
   }
 
   @Override
-  public Optional<TxEvent> findTxStartedEvent(String globalTxId, String localTxId) {
-    return eventRepo.findFirstStartedEventByGlobalTxIdAndLocalTxId(globalTxId, localTxId);
-  }
-
-  @Override
   public List<TxEvent> findTransactions(String globalTxId, String type) {
     return eventRepo.findByEventGlobalTxIdAndEventType(globalTxId, type);
-  }
-
-  @Override
-  public List<TxEvent> findFirstUncompensatedEventByIdGreaterThan(long id, String type) {
-    return eventRepo.findFirstByTypeAndSurrogateIdGreaterThan(type, id, SINGLE_TX_EVENT_REQUEST);
   }
 
   @Override
@@ -73,4 +63,26 @@ class SpringTxEventRepository implements TxEventRepository {
   public void deleteDuplicateEvents(String type) {
     eventRepo.deleteByType(type);
   }
+
+  @Override
+  public List<TxEvent> findStartedEventsWithMatchingEndedButNotCompensatedEvents(String globalTxId){
+    return eventRepo.findStartedEventsWithMatchingEndedButNotCompensatedEvents(globalTxId);
+  }
+
+  @Override
+  public void updateFindStatusTrue(long surrogateId) {
+    eventRepo.updateFindStatusTrue(surrogateId);
+  }
+
+  @Override
+  public List<TxEvent> findIsGlobalAbortByGlobalTxId(String globalTxId) {
+    return eventRepo.findIsGlobalAbortByGlobalTxId(globalTxId);
+  }
+
+  @Override
+  public void updateIsTimeoutTrue(long surrogateId){
+    eventRepo.updateIsTimeoutTrue(surrogateId);
+  }
+
+
 }

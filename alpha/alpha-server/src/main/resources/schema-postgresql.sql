@@ -28,10 +28,12 @@ CREATE TABLE IF NOT EXISTS TxEvent (
   expiryTime timestamp(6) NOT NULL,
   retryMethod varchar(256) NOT NULL,
   retries int NOT NULL DEFAULT 0,
-  payloads bytea
+  payloads bytea,
+  findStatus BOOLEAN DEFAULT FALSE,
+  isTimeout BOOLEAN DEFAULT FALSE
 );
 
-CREATE INDEX IF NOT EXISTS saga_events_index ON TxEvent (surrogateId, globalTxId, localTxId, type, expiryTime);
+CREATE INDEX IF NOT EXISTS saga_events_index ON TxEvent (surrogateId, globalTxId, localTxId, type, expiryTime, findStatus, isTimeout);
 CREATE INDEX IF NOT EXISTS saga_global_tx_index ON TxEvent (globalTxId);
 
 

@@ -58,20 +58,6 @@ public interface TxEventRepository {
   List<TxEvent> findTimeoutEvents();
 
   /**
-   * Find a {@link TxEvent} which satisfies below requirements:
-   * <ol>
-   *   <li>{@link TxEvent#type} is {@link EventType#TxStartedEvent}</li>
-   *   <li>{@link TxEvent#globalTxId} equals to param <code>globalTxId</code></li>
-   *   <li>{@link TxEvent#localTxId} equals to param <code>localTxId</code></li>
-   * </ol>
-   *
-   * @param globalTxId
-   * @param localTxId
-   * @return {@link TxEvent}
-   */
-  Optional<TxEvent> findTxStartedEvent(String globalTxId, String localTxId);
-
-  /**
    * Find {@link TxEvent}s which satisfy below requirements:
    * <ol>
    *   <li>{@link TxEvent#globalTxId} equals to param <code>globalTxId</code></li>
@@ -87,17 +73,7 @@ public interface TxEventRepository {
   /**
    * Find a {@link TxEvent} which satisfies below requirements:
    * <ol>
-   *   <li>{@link TxEvent#type} equals to {@link EventType#TxEndedEvent}</li>
-   *   <li>{@link TxEvent#surrogateId} greater than param <code>id</code></li>
-   *   <li>{@link TxEvent#type} equals to param <code>type</code></li>
-   *   <li>There is a corresponding <code>TxAbortedEvent</code></li>
-   *   <li>There is no coresponding <code>TxCompensatedEvent</code></li>
-   * </ol>
-   *
-   * @param id
-   * @return
-   */
-  List<TxEvent> findFirstUncompensatedEventByIdGreaterThan(long id, String type);
+  TxEvent> findFirstUncompensatedEventByIdGreaterThan(long id, String type);
 
   /**
    * Find a {@link TxEvent} which satisfies below requirements:
@@ -118,4 +94,12 @@ public interface TxEventRepository {
    * @param type event type
    */
   void deleteDuplicateEvents(String type);
+
+  List<TxEvent> findStartedEventsWithMatchingEndedButNotCompensatedEvents(String globalTxId);
+
+  void updateFindStatusTrue(long surrogateId);
+
+  List<TxEvent> findIsGlobalAbortByGlobalTxId(String globalTxId);
+
+  void updateIsTimeoutTrue(long surrogateId);
 }

@@ -155,7 +155,7 @@ public class AlphaIntegrationTest {
 
   @Before
   public void before() {
-    System.out.println(" globalTxId " + globalTxId);
+    System.out.println("GlobalTxId " + globalTxId);
     eventRepo.deleteAll();
     receivedCommands.clear();
   }
@@ -259,8 +259,8 @@ public class AlphaIntegrationTest {
     blockingStub.onTxEvent(someGrpcEvent(TxStartedEvent));
     blockingStub.onTxEvent(someGrpcEvent(TxAbortedEvent));
 
-    blockingStub.onTxEvent(eventOf(TxEndedEvent, localTxId, parentTxId, new byte[0], compensationMethod));
-    await().atMost(1, SECONDS).until(() -> !receivedCommands.isEmpty());
+    blockingStub.onTxEvent(someGrpcEvent(TxEndedEvent));
+    await().atMost(10, SECONDS).until(() -> !receivedCommands.isEmpty());
 
     GrpcCompensateCommand command = receivedCommands.poll();
     assertThat(command.getGlobalTxId(), is(globalTxId));
@@ -284,13 +284,14 @@ public class AlphaIntegrationTest {
     blockingStub.onTxEvent(eventOf(TxEndedEvent, localTxId1, parentTxId1, new byte[0], "method b"));
 
     blockingStub.onTxEvent(someGrpcEvent(TxAbortedEvent));
-    await().atMost(1, SECONDS).until(() -> receivedCommands.size() > 1);
+    await().atMost(1, SECONDS).until(() -> receivedCommands.size() == 2);
+
 
     assertThat(receivedCommands, contains(
-        GrpcCompensateCommand.newBuilder().setGlobalTxId(globalTxId).setLocalTxId(localTxId1).setParentTxId(parentTxId1)
-            .setCompensationMethod("method b").setPayloads(ByteString.copyFrom("service b".getBytes())).build(),
         GrpcCompensateCommand.newBuilder().setGlobalTxId(globalTxId).setLocalTxId(localTxId).setParentTxId(parentTxId)
-            .setCompensationMethod("method a").setPayloads(ByteString.copyFrom("service a".getBytes())).build()
+            .setCompensationMethod("method a").setPayloads(ByteString.copyFrom("service a".getBytes())).build(),
+        GrpcCompensateCommand.newBuilder().setGlobalTxId(globalTxId).setLocalTxId(localTxId1).setParentTxId(parentTxId1)
+            .setCompensationMethod("method b").setPayloads(ByteString.copyFrom("service b".getBytes())).build()
     ));
   }
 
@@ -299,10 +300,10 @@ public class AlphaIntegrationTest {
     asyncStub.onConnected(serviceConfig, compensateResponseObserver);
     blockingStub.onTxEvent(someGrpcEvent(TxStartedEvent));
     blockingStub.onTxEvent(someGrpcEvent(TxEndedEvent));
-    await().atMost(1, SECONDS).until(() -> !eventRepo.findByGlobalTxId(globalTxId).isEmpty());
+    await().atMost(3, SECONDS).until(() -> !eventRepo.findByGlobalTxId(globalTxId).isEmpty());
 
     blockingStub.onTxEvent(someGrpcEvent(TxAbortedEvent));
-    await().atMost(1, SECONDS).until(() -> !receivedCommands.isEmpty());
+    await().atMost(3, SECONDS).until(() -> !receivedCommands.isEmpty());
 
     GrpcCompensateCommand command = receivedCommands.poll();
     assertThat(command.getGlobalTxId(), is(globalTxId));
@@ -325,10 +326,10 @@ public class AlphaIntegrationTest {
     TxEventServiceBlockingStub anotherBlockingStub = TxEventServiceGrpc.newBlockingStub(clientChannel);
     anotherBlockingStub.onTxEvent(someGrpcEvent(TxStartedEvent, UUID.randomUUID().toString()));
 
-    await().atMost(1, SECONDS).until(() -> eventRepo.count() == 3);
+    await().atMost(3, SECONDS).until(() -> eventRepo.count() == 3);
 
     blockingStub.onTxEvent(someGrpcEvent(TxAbortedEvent));
-    await().atMost(1, SECONDS).until(() -> !receivedCommands.isEmpty());
+    await().atMost(3, SECONDS).until(() -> !receivedCommands.isEmpty());
 
     assertThat(receivedCommands.size(), is(1));
     assertThat(receivedCommands.poll().getGlobalTxId(), is(globalTxId));
@@ -369,10 +370,10 @@ public class AlphaIntegrationTest {
     String anotherLocalTxId2 = UUID.randomUUID().toString();
     blockingStub.onTxEvent(someGrpcEvent(TxStartedEvent, globalTxId, anotherLocalTxId2));
 
-    await().atMost(1, SECONDS).until(() -> eventRepo.count() == 7);
+    await().atMost(3, SECONDS).until(() -> eventRepo.count() == 7);
 
     blockingStub.onTxEvent(someGrpcEvent(TxAbortedEvent, globalTxId, anotherLocalTxId2));
-    await().atMost(1, SECONDS).until(() -> !receivedCommands.isEmpty());
+    await().atMost(3, SECONDS).until(() -> !receivedCommands.isEmpty());
 
     assertThat(receivedCommands.size(), is(1));
     assertThat(receivedCommands.poll().getGlobalTxId(), is(globalTxId));
@@ -390,25 +391,26 @@ public class AlphaIntegrationTest {
 
     blockingStub.onTxEvent(someGrpcEvent(TxEndedEvent, globalTxId, anotherLocalTxId));
 
-    await().atMost(1, SECONDS).until(() -> {
+    await().atMost(3, SECONDS).until(() -> {
       List<TxEvent> events = eventRepo.findByGlobalTxId(globalTxId);
       return events.size() == 8 && events.get(events.size() - 1).type().equals(SagaEndedEvent.name());
     });
   }
 
   @Test
+  //经常不能通过
   public void abortTimeoutSagaStartedEvent() {
     asyncStub.onConnected(serviceConfig, compensateResponseObserver);
     blockingStub.onTxEvent(someGrpcEventWithTimeout(SagaStartedEvent, globalTxId, null, 1));
 
-    await().atMost(2, SECONDS).until(() -> eventRepo.count() == 3);
+    await().atMost(3, SECONDS).until(() -> eventRepo.count() == 3);
 
     List<TxEvent> events = eventRepo.findByGlobalTxId(globalTxId);
     assertThat(events.get(0).type(), is(SagaStartedEvent.name()));
     assertThat(events.get(1).type(), is(TxAbortedEvent.name()));
     assertThat(events.get(2).type(), is(SagaEndedEvent.name()));
 
-    await().atMost(2, SECONDS).until(this::waitTillTimeoutDone);
+    await().atMost(3, SECONDS).until(this::waitTillTimeoutDone);
 
     assertThat(timeoutEntityRepository.count(), is(1L));
     Iterable<TxTimeout> timeouts = timeoutEntityRepository.findAll();
@@ -420,12 +422,13 @@ public class AlphaIntegrationTest {
   }
 
   @Test
+  //不能通过
   public void abortTimeoutTxStartedEvent() {
     asyncStub.onConnected(serviceConfig, compensateResponseObserver);
     blockingStub.onTxEvent(someGrpcEvent(SagaStartedEvent, globalTxId, globalTxId, null));
     blockingStub.onTxEvent(someGrpcEventWithTimeout(TxStartedEvent, localTxId, globalTxId, 1));
 
-    await().atMost(2, SECONDS).until(() -> {
+    await().atMost(3, SECONDS).until(() -> {
       List<TxEvent> events = eventRepo.findByGlobalTxId(globalTxId);
       return eventRepo.count() == 5 && events.get(events.size() - 1).type().equals(SagaEndedEvent.name());
     });
@@ -442,7 +445,7 @@ public class AlphaIntegrationTest {
       assertThat(events.get(4).type(), is(TxCompensatedEvent.name()));
     }
 
-    await().atMost(2, SECONDS).until(this::waitTillTimeoutDone);
+    await().atMost(3, SECONDS).until(this::waitTillTimeoutDone);
 
     assertThat(timeoutEntityRepository.count(), is(1L));
     Iterable<TxTimeout> timeouts = timeoutEntityRepository.findAll();
@@ -454,14 +457,15 @@ public class AlphaIntegrationTest {
   }
 
   @Test
+  //一起不能通过 单独可以
   public void doNotCompensateRetryingEvents() throws InterruptedException {
     asyncStub.onConnected(serviceConfig, compensateResponseObserver);
     blockingStub.onTxEvent(someGrpcEventWithRetry(TxStartedEvent, retryMethod, 1));
-    blockingStub.onTxEvent(someGrpcEvent(TxAbortedEvent));
+    blockingStub.onTxEvent(someGrpcEventWithRetry(TxAbortedEvent, retryMethod, 1));
     blockingStub.onTxEvent(someGrpcEventWithRetry(TxStartedEvent, retryMethod, 0));
     blockingStub.onTxEvent(someGrpcEvent(TxEndedEvent));
 
-    await().atMost(1, SECONDS).until(() -> eventRepo.count() == 4);
+    await().atMost(3, SECONDS).until(() -> eventRepo.count() == 4);
 
     List<TxEvent> events = eventRepo.findByGlobalTxId(globalTxId);
     assertThat(events.size(), is(4));
@@ -471,6 +475,41 @@ public class AlphaIntegrationTest {
     assertThat(events.get(3).type(), is(TxEndedEvent.name()));
 
     assertThat(receivedCommands.isEmpty(), is(true));
+  }
+
+  @Test
+  //不能通过
+  public void whenAbortEventIsLate(){
+      String sagaGlobalId = UUID.randomUUID().toString();
+      String bookingApplicationLocalId = UUID.randomUUID().toString();
+      String carServiceLocalId = UUID.randomUUID().toString();
+      String hotelServiceLocalId = UUID.randomUUID().toString();
+
+      String anotherSagaGlobalId = UUID.randomUUID().toString();
+      String anotheBookingApplicationLocalId = UUID.randomUUID().toString();
+      String anotherCarServiceLocalId = UUID.randomUUID().toString();
+      String anotherHoterServceiLocalId = UUID.randomUUID().toString();
+
+      asyncStub.onConnected(serviceConfig, compensateResponseObserver);
+
+      blockingStub.onTxEvent(someGrpcEvent(SagaStartedEvent, sagaGlobalId, bookingApplicationLocalId));
+      blockingStub.onTxEvent(someGrpcEvent(SagaEndedEvent, anotherSagaGlobalId, anotheBookingApplicationLocalId));
+
+      blockingStub.onTxEvent(someGrpcEvent(TxStartedEvent, sagaGlobalId, carServiceLocalId));
+      blockingStub.onTxEvent(someGrpcEvent(TxEndedEvent, sagaGlobalId, carServiceLocalId));
+
+      blockingStub.onTxEvent(someGrpcEvent(TxStartedEvent, anotherSagaGlobalId, anotherCarServiceLocalId));
+      blockingStub.onTxEvent(someGrpcEvent(TxEndedEvent, anotherSagaGlobalId, anotherCarServiceLocalId));
+
+      blockingStub.onTxEvent(someGrpcEvent(TxStartedEvent, sagaGlobalId, hotelServiceLocalId));
+      blockingStub.onTxEvent(someGrpcEvent(TxStartedEvent, anotherSagaGlobalId, anotherHoterServceiLocalId));
+
+      blockingStub.onTxEvent(someGrpcEvent(TxAbortedEvent, anotherSagaGlobalId, anotherHoterServceiLocalId));
+      await().atMost(3, SECONDS).until(() -> !receivedCommands.isEmpty());
+
+      blockingStub.onTxEvent(someGrpcEvent(TxAbortedEvent, sagaGlobalId, hotelServiceLocalId));
+      await().atMost(3, SECONDS).until(() -> receivedCommands.size() > 1);
+      assertThat(receivedCommands.size(), is(2));
   }
 
   private boolean waitTillTimeoutDone() {

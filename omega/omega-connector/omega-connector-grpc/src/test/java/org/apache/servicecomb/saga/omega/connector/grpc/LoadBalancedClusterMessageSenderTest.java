@@ -138,7 +138,7 @@ public class LoadBalancedClusterMessageSenderTest extends LoadBalancedClusterMes
       }
     });
 
-    TxEvent abortedEvent = new TxAbortedEvent(globalTxId, localTxId, parentTxId, compensationMethod, new RuntimeException("oops"));
+    TxEvent abortedEvent = new TxAbortedEvent(globalTxId, localTxId, parentTxId, compensationMethod, new RuntimeException("oops"), 0);
     messageSender.send(abortedEvent);
 
     // restarted server gets priority, since it had no traffic

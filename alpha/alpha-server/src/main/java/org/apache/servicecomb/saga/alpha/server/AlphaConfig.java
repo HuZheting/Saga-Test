@@ -18,24 +18,15 @@
 package org.apache.servicecomb.saga.alpha.server;
 
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.*;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import org.apache.servicecomb.saga.alpha.core.CommandRepository;
-import org.apache.servicecomb.saga.alpha.core.CompositeOmegaCallback;
-import org.apache.servicecomb.saga.alpha.core.EventScanner;
-import org.apache.servicecomb.saga.alpha.core.OmegaCallback;
-import org.apache.servicecomb.saga.alpha.core.PendingTaskRunner;
-import org.apache.servicecomb.saga.alpha.core.PushBackOmegaCallback;
-import org.apache.servicecomb.saga.alpha.core.TxConsistentService;
-import org.apache.servicecomb.saga.alpha.core.TxEventRepository;
-import org.apache.servicecomb.saga.alpha.core.TxTimeoutRepository;
+import org.apache.servicecomb.saga.alpha.core.*;
+import org.apache.servicecomb.saga.alpha.core.handler.AbortEventHandler;
+import org.apache.servicecomb.saga.alpha.core.handler.CompensateEventHandler;
+import org.apache.servicecomb.saga.alpha.core.handler.TimeoutHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
@@ -46,6 +37,9 @@ import org.springframework.context.annotation.Configuration;
 class AlphaConfig {
   private final BlockingQueue<Runnable> pendingCompensations = new LinkedBlockingQueue<>();
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+  private BlockingDeque<TxEvent> abortEventsDeque = new LinkedBlockingDeque<>();
+  private BlockingDeque<Command> commandsDeque = new LinkedBlockingDeque<>();
 
   @Value("${alpha.compensation.retry.delay:3000}")
   private int delay;
@@ -94,11 +88,15 @@ class AlphaConfig {
       OmegaCallback omegaCallback,
       Map<String, Map<String, OmegaCallback>> omegaCallbacks) {
 
+    new AbortEventHandler(abortEventsDeque, commandsDeque, eventRepository, commandRepository, timeoutRepository).run();
+    new TimeoutHandler(abortEventsDeque, timeoutRepository, eventRepository).run();
+    new CompensateEventHandler(commandsDeque, commandRepository, omegaCallback).run();
+
     new EventScanner(scheduler,
         eventRepository, commandRepository, timeoutRepository,
         omegaCallback, eventPollingInterval).run();
 
-    TxConsistentService consistentService = new TxConsistentService(eventRepository);
+    TxConsistentService consistentService = new TxConsistentService(eventRepository, abortEventsDeque, commandsDeque);
 
     ServerStartable startable = buildGrpc(serverConfig, consistentService, omegaCallbacks);
     new Thread(startable::start).start();

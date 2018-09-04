@@ -45,27 +45,10 @@ public class SpringCommandRepository implements CommandRepository {
     this.commandRepository = commandRepository;
   }
 
-  @Override
-  public void saveCompensationCommands(String globalTxId) {
-    List<TxEvent> events = eventRepository
-        .findStartedEventsWithMatchingEndedButNotCompensatedEvents(globalTxId);
-
-    Map<String, Command> commands = new LinkedHashMap<>();
-
-    for (TxEvent event : events) {
-      commands.computeIfAbsent(event.localTxId(), k -> new Command(event));
-    }
-
-    for (Command command : commands.values()) {
-      LOG.info("Saving compensation command {}", command);
-      try {
-        commandRepository.save(command);
-      } catch (Exception e) {
-        LOG.warn("Failed to save some command {}", command);
-      }
-      LOG.info("Saved compensation command {}", command);
-    }
+  public void save(Command command){
+    commandRepository.save(command);
   }
+
 
   @Override
   public void markCommandAsDone(String globalTxId, String localTxId) {
@@ -78,18 +61,13 @@ public class SpringCommandRepository implements CommandRepository {
   }
 
   @Transactional
-  @Override
-  public List<Command> findFirstCommandToCompensate() {
-    List<Command> commands = commandRepository
-        .findFirstGroupByGlobalTxIdWithoutPendingOrderByIdDesc();
-
-    commands.forEach(command ->
-        commandRepository.updateStatusByGlobalTxIdAndLocalTxId(
+  public void updateStatusByGlobalTxIdAndLocalTxId(Command command,String from, String to){
+    commandRepository.updateStatusByGlobalTxIdAndLocalTxId(
             NEW.name(),
             PENDING.name(),
             command.globalTxId(),
-            command.localTxId()));
+            command.localTxId());
 
-    return commands;
   }
+
 }

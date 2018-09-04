@@ -43,13 +43,6 @@ interface TxTimeoutEntityRepository extends CrudRepository<TxTimeout, Long> {
       @Param("globalTxId") String globalTxId,
       @Param("localTxId") String localTxId);
 
-  @Lock(LockModeType.OPTIMISTIC)
-  @Query("SELECT t FROM TxTimeout AS t "
-      + "WHERE t.status = 'NEW' "
-      + "  AND t.expiryTime < CURRENT_TIMESTAMP "
-      + "ORDER BY t.expiryTime ASC")
-  List<TxTimeout> findFirstTimeoutTxOrderByExpireTimeAsc(Pageable pageable);
-
   @Transactional
   @Modifying(clearAutomatically = true)
   @Query("UPDATE TxTimeout t "

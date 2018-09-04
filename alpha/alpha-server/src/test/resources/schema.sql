@@ -28,7 +28,9 @@ CREATE TABLE IF NOT EXISTS TxEvent (
   expiryTime TIMESTAMP NOT NULL,
   retryMethod varchar(256) NOT NULL,
   retries int DEFAULT 0 NOT NULL,
-  payloads blob
+  payloads blob,
+  findStatus BOOLEAN DEFAULT FALSE,
+  isTimeout BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS Command (

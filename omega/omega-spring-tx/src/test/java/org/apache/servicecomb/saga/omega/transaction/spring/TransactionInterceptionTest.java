@@ -170,7 +170,7 @@ public class TransactionInterceptionTest {
         new String[] {
             new TxStartedEvent(globalTxId, newLocalTxId, globalTxId, compensationMethod, 0, "", 0,
                 illegalUser).toString(),
-            new TxAbortedEvent(globalTxId, newLocalTxId, globalTxId, compensationMethod, throwable).toString()},
+            new TxAbortedEvent(globalTxId, newLocalTxId, globalTxId, compensationMethod, throwable, 0).toString()},
         toArray(messages)
     );
   }

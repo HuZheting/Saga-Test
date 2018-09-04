@@ -33,7 +33,9 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
 
 import org.apache.servicecomb.saga.common.EventType;
@@ -42,6 +44,8 @@ import org.junit.Test;
 
 public class TxConsistentServiceTest {
   private final Deque<TxEvent> events = new ConcurrentLinkedDeque<>();
+  private final BlockingDeque<TxEvent> abortEventsDeque = new LinkedBlockingDeque<>();
+  private final BlockingDeque<Command> commandsDeque = new LinkedBlockingDeque<>();
   private final TxEventRepository eventRepository = new TxEventRepository() {
     @Override
     public void save(TxEvent event) {
@@ -59,22 +63,10 @@ public class TxConsistentServiceTest {
     }
 
     @Override
-    public Optional<TxEvent> findTxStartedEvent(String globalTxId, String localTxId) {
-      return events.stream()
-          .filter(event -> globalTxId.equals(event.globalTxId()) && localTxId.equals(event.localTxId()))
-          .findFirst();
-    }
-
-    @Override
     public List<TxEvent> findTransactions(String globalTxId, String type) {
       return events.stream()
           .filter(event -> globalTxId.equals(event.globalTxId()) && type.equals(event.type()))
           .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<TxEvent> findFirstUncompensatedEventByIdGreaterThan(long id, String type) {
-      return emptyList();
     }
 
     @Override
@@ -84,6 +76,26 @@ public class TxConsistentServiceTest {
 
     @Override
     public void deleteDuplicateEvents(String type) {
+    }
+
+    @Override
+    public List<TxEvent> findStartedEventsWithMatchingEndedButNotCompensatedEvents(String globalTxId) {
+      return emptyList();
+    }
+
+    @Override
+    public void updateFindStatusTrue(long id) {
+
+    }
+
+    @Override
+    public List<TxEvent> findIsGlobalAbortByGlobalTxId(String globalTxId) {
+      return emptyList();
+    }
+
+    @Override
+    public void updateIsTimeoutTrue(long surrogateId) {
+
     }
   };
 
@@ -95,7 +107,7 @@ public class TxConsistentServiceTest {
 
   private final String compensationMethod = getClass().getCanonicalName();
 
-  private final TxConsistentService consistentService = new TxConsistentService(eventRepository);
+  private final TxConsistentService consistentService = new TxConsistentService(eventRepository, abortEventsDeque, commandsDeque);
   private final byte[] payloads = "yeah".getBytes();
 
   @Before

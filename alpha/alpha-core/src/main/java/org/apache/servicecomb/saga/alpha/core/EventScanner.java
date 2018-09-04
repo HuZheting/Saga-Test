@@ -42,7 +42,6 @@ public class EventScanner implements Runnable {
   private final OmegaCallback omegaCallback;
   private final int eventPollingInterval;
 
-  private long nextEndedEventId;
   private long nextCompensatedEventId;
 
   public EventScanner(ScheduledExecutorService scheduler,
@@ -68,10 +67,6 @@ public class EventScanner implements Runnable {
     scheduler.scheduleWithFixedDelay(
         () -> {
           updateTimeoutStatus();
-          findTimeoutEvents();
-          abortTimeoutEvents();
-          saveUncompensatedEventsToCommands();
-          compensate();
           updateCompensatedCommands();
           deleteDuplicateSagaEndedEvents();
           updateTransactionStatus();
@@ -81,28 +76,12 @@ public class EventScanner implements Runnable {
         MILLISECONDS);
   }
 
-  private void findTimeoutEvents() {
-    eventRepository.findTimeoutEvents()
-        .forEach(event -> {
-          LOG.info("Found timeout event {}", event);
-          timeoutRepository.save(txTimeoutOf(event));
-        });
-  }
-
   private void updateTimeoutStatus() {
     timeoutRepository.markTimeoutAsDone();
   }
 
-  private void saveUncompensatedEventsToCommands() {
-    eventRepository.findFirstUncompensatedEventByIdGreaterThan(nextEndedEventId, TxEndedEvent.name())
-        .forEach(event -> {
-          LOG.info("Found uncompensated event {}", event);
-          nextEndedEventId = event.id();
-          commandRepository.saveCompensationCommands(event.globalTxId());
-        });
-  }
-
   private void updateCompensatedCommands() {
+    //TODO : 对同一条数据重复执行
     eventRepository.findFirstCompensatedEventByIdGreaterThan(nextCompensatedEventId)
         .ifPresent(event -> {
           LOG.info("Found compensated event {}", event);
@@ -120,25 +99,13 @@ public class EventScanner implements Runnable {
   }
 
   private void updateCompensationStatus(TxEvent event) {
+    //TODO : 对同一条数据重复执行
     commandRepository.markCommandAsDone(event.globalTxId(), event.localTxId());
     LOG.info("Transaction with globalTxId {} and localTxId {} was compensated",
         event.globalTxId(),
         event.localTxId());
 
     markSagaEnded(event);
-  }
-
-  private void abortTimeoutEvents() {
-    timeoutRepository.findFirstTimeout().forEach(timeout -> {
-      LOG.info("Found timeout event {} to abort", timeout);
-
-      eventRepository.save(toTxAbortedEvent(timeout));
-
-      if (timeout.type().equals(TxStartedEvent.name())) {
-        eventRepository.findTxStartedEvent(timeout.globalTxId(), timeout.localTxId())
-            .ifPresent(omegaCallback::compensate);
-      }
-    });
   }
 
   private void updateTransactionStatus() {
@@ -160,17 +127,6 @@ public class EventScanner implements Runnable {
     events.forEach(this::markGlobalTxEndWithEvent);
   }
 
-  private TxEvent toTxAbortedEvent(TxTimeout timeout) {
-    return new TxEvent(
-        timeout.serviceName(),
-        timeout.instanceId(),
-        timeout.globalTxId(),
-        timeout.localTxId(),
-        timeout.parentTxId(),
-        TxAbortedEvent.name(),
-        "",
-        ("Transaction timeout").getBytes());
-  }
 
   private TxEvent toSagaEndedEvent(TxEvent event) {
     return new TxEvent(
@@ -184,17 +140,6 @@ public class EventScanner implements Runnable {
         EMPTY_PAYLOAD);
   }
 
-  private void compensate() {
-    commandRepository.findFirstCommandToCompensate()
-        .forEach(command -> {
-          LOG.info("Compensating transaction with globalTxId {} and localTxId {}",
-              command.globalTxId(),
-              command.localTxId());
-
-          omegaCallback.compensate(txStartedEventOf(command));
-        });
-  }
-
   private TxEvent txStartedEventOf(Command command) {
     return new TxEvent(
         command.serviceName(),
@@ -205,20 +150,6 @@ public class EventScanner implements Runnable {
         TxStartedEvent.name(),
         command.compensationMethod(),
         command.payloads()
-    );
-  }
-
-  private TxTimeout txTimeoutOf(TxEvent event) {
-    return new TxTimeout(
-        event.id(),
-        event.serviceName(),
-        event.instanceId(),
-        event.globalTxId(),
-        event.localTxId(),
-        event.parentTxId(),
-        event.type(),
-        event.expiryTime(),
-        NEW.name()
     );
   }
 }

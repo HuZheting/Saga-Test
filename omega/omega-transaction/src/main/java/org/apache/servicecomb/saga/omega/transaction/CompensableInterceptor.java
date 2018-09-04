@@ -41,8 +41,8 @@ class CompensableInterceptor implements EventAwareInterceptor {
   }
 
   @Override
-  public void onError(String parentTxId, String compensationMethod, Throwable throwable) {
+  public void onError(String parentTxId, String compensationMethod, Throwable throwable, int retries) {
     sender.send(
-        new TxAbortedEvent(context.globalTxId(), context.localTxId(), parentTxId, compensationMethod, throwable));
+        new TxAbortedEvent(context.globalTxId(), context.localTxId(), parentTxId, compensationMethod, throwable, retries));
   }
 }
