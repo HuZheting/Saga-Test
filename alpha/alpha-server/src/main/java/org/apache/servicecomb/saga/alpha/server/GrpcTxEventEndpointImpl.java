@@ -22,6 +22,7 @@ package org.apache.servicecomb.saga.alpha.server;
 
 import static java.util.Collections.emptyMap;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +37,8 @@ import org.apache.servicecomb.saga.pack.contract.grpc.GrpcTxEvent;
 import org.apache.servicecomb.saga.pack.contract.grpc.TxEventServiceGrpc.TxEventServiceImplBase;
 
 import io.grpc.stub.StreamObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class GrpcTxEventEndpointImpl extends TxEventServiceImplBase {
 
@@ -45,6 +48,8 @@ class GrpcTxEventEndpointImpl extends TxEventServiceImplBase {
   private final TxConsistentService txConsistentService;
 
   private final Map<String, Map<String, OmegaCallback>> omegaCallbacks;
+
+  static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   GrpcTxEventEndpointImpl(TxConsistentService txConsistentService,
       Map<String, Map<String, OmegaCallback>> omegaCallbacks) {
@@ -57,6 +62,7 @@ class GrpcTxEventEndpointImpl extends TxEventServiceImplBase {
     omegaCallbacks
         .computeIfAbsent(request.getServiceName(), key -> new ConcurrentHashMap<>())
         .put(request.getInstanceId(), new GrpcOmegaCallback(responseObserver));
+    LOG.info("omegaCallbacks add service");
   }
 
   // TODO: 2018/1/5 connect is async and disconnect is sync, meaning callback may not be registered on disconnected

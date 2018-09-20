@@ -84,19 +84,10 @@ public class TxConsistentServiceTest {
     }
 
     @Override
-    public void updateFindStatusTrue(long id) {
-
-    }
-
-    @Override
     public List<TxEvent> findIsGlobalAbortByGlobalTxId(String globalTxId) {
       return emptyList();
     }
 
-    @Override
-    public void updateIsTimeoutTrue(long surrogateId) {
-
-    }
   };
 
   private final String globalTxId = UUID.randomUUID().toString();

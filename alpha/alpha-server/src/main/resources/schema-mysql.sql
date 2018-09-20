@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS TxEvent (
   payloads blob,
   retries int(11) NOT NULL DEFAULT '0',
   retryMethod varchar(256) DEFAULT NULL,
-  findStatus BOOLEAN DEFAULT FALSE,
-  isTimeout BOOLEAN DEFAULT FALSE,
+  findStatus tinyint DEFAULT '0',
+  isTimeout tinyint DEFAULT '0',
   PRIMARY KEY (surrogateId),
   INDEX saga_events_index (surrogateId, globalTxId, localTxId, type, expiryTime, findStatus, isTimeout),
   INDEX saga_global_tx_index (globalTxId)

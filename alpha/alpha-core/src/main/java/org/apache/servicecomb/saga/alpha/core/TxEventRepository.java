@@ -97,9 +97,6 @@ public interface TxEventRepository {
 
   List<TxEvent> findStartedEventsWithMatchingEndedButNotCompensatedEvents(String globalTxId);
 
-  void updateFindStatusTrue(long surrogateId);
-
   List<TxEvent> findIsGlobalAbortByGlobalTxId(String globalTxId);
 
-  void updateIsTimeoutTrue(long surrogateId);
 }

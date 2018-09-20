@@ -260,7 +260,7 @@ public class AlphaIntegrationTest {
     blockingStub.onTxEvent(someGrpcEvent(TxAbortedEvent));
 
     blockingStub.onTxEvent(someGrpcEvent(TxEndedEvent));
-    await().atMost(10, SECONDS).until(() -> !receivedCommands.isEmpty());
+    await().atMost(3, SECONDS).until(() -> !receivedCommands.isEmpty());
 
     GrpcCompensateCommand command = receivedCommands.poll();
     assertThat(command.getGlobalTxId(), is(globalTxId));
@@ -284,8 +284,7 @@ public class AlphaIntegrationTest {
     blockingStub.onTxEvent(eventOf(TxEndedEvent, localTxId1, parentTxId1, new byte[0], "method b"));
 
     blockingStub.onTxEvent(someGrpcEvent(TxAbortedEvent));
-    await().atMost(1, SECONDS).until(() -> receivedCommands.size() == 2);
-
+    await().atMost(1, SECONDS).until(() -> receivedCommands.size() > 1);
 
     assertThat(receivedCommands, contains(
         GrpcCompensateCommand.newBuilder().setGlobalTxId(globalTxId).setLocalTxId(localTxId).setParentTxId(parentTxId)
@@ -398,7 +397,6 @@ public class AlphaIntegrationTest {
   }
 
   @Test
-  //经常不能通过
   public void abortTimeoutSagaStartedEvent() {
     asyncStub.onConnected(serviceConfig, compensateResponseObserver);
     blockingStub.onTxEvent(someGrpcEventWithTimeout(SagaStartedEvent, globalTxId, null, 1));
@@ -422,7 +420,6 @@ public class AlphaIntegrationTest {
   }
 
   @Test
-  //不能通过
   public void abortTimeoutTxStartedEvent() {
     asyncStub.onConnected(serviceConfig, compensateResponseObserver);
     blockingStub.onTxEvent(someGrpcEvent(SagaStartedEvent, globalTxId, globalTxId, null));
@@ -457,7 +454,6 @@ public class AlphaIntegrationTest {
   }
 
   @Test
-  //一起不能通过 单独可以
   public void doNotCompensateRetryingEvents() throws InterruptedException {
     asyncStub.onConnected(serviceConfig, compensateResponseObserver);
     blockingStub.onTxEvent(someGrpcEventWithRetry(TxStartedEvent, retryMethod, 1));
@@ -478,7 +474,6 @@ public class AlphaIntegrationTest {
   }
 
   @Test
-  //不能通过
   public void whenAbortEventIsLate(){
       String sagaGlobalId = UUID.randomUUID().toString();
       String bookingApplicationLocalId = UUID.randomUUID().toString();

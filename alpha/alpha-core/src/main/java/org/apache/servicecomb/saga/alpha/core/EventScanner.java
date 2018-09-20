@@ -81,7 +81,6 @@ public class EventScanner implements Runnable {
   }
 
   private void updateCompensatedCommands() {
-    //TODO : 对同一条数据重复执行
     eventRepository.findFirstCompensatedEventByIdGreaterThan(nextCompensatedEventId)
         .ifPresent(event -> {
           LOG.info("Found compensated event {}", event);
@@ -99,7 +98,6 @@ public class EventScanner implements Runnable {
   }
 
   private void updateCompensationStatus(TxEvent event) {
-    //TODO : 对同一条数据重复执行
     commandRepository.markCommandAsDone(event.globalTxId(), event.localTxId());
     LOG.info("Transaction with globalTxId {} and localTxId {} was compensated",
         event.globalTxId(),

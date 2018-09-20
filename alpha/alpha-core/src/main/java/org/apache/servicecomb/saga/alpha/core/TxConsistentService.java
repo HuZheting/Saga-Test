@@ -46,7 +46,6 @@ public class TxConsistentService {
   }
 
   public boolean handle(TxEvent event) {
-    System.out.println(event.type() + " " + event.localTxId());
     if (types.contains(event.type()) && isGlobalTxAborted(event)) {
       LOG.info("Transaction event {} rejected, because its parent with globalTxId {} was already aborted",
           event.type(), event.globalTxId());

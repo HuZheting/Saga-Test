@@ -46,7 +46,7 @@ class SpringTxEventRepository implements TxEventRepository {
 
   @Override
   public List<TxEvent> findTimeoutEvents() {
-    return eventRepo.findTimeoutEvents(SINGLE_TX_EVENT_REQUEST);
+    return eventRepo.findTimeoutEvents();
   }
 
   @Override
@@ -70,19 +70,8 @@ class SpringTxEventRepository implements TxEventRepository {
   }
 
   @Override
-  public void updateFindStatusTrue(long surrogateId) {
-    eventRepo.updateFindStatusTrue(surrogateId);
-  }
-
-  @Override
   public List<TxEvent> findIsGlobalAbortByGlobalTxId(String globalTxId) {
     return eventRepo.findIsGlobalAbortByGlobalTxId(globalTxId);
   }
-
-  @Override
-  public void updateIsTimeoutTrue(long surrogateId){
-    eventRepo.updateIsTimeoutTrue(surrogateId);
-  }
-
 
 }

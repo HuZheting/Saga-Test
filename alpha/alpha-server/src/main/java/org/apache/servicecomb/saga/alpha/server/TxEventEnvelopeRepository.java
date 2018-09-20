@@ -50,13 +50,14 @@ interface TxEventEnvelopeRepository extends CrudRepository<TxEvent, Long> {
 
   @Query("SELECT t FROM TxEvent t "
       + "WHERE t.type IN ('TxStartedEvent', 'SagaStartedEvent') "
+      + " AND t.isTimeout = 0 "
       + "  AND t.expiryTime < CURRENT_TIMESTAMP AND NOT EXISTS( "
       + "  SELECT t1.globalTxId FROM TxEvent t1 "
       + "  WHERE t1.globalTxId = t.globalTxId "
       + "    AND t1.localTxId = t.localTxId "
       + "    AND t1.type != t.type"
       + ")")
-  List<TxEvent> findTimeoutEvents(Pageable pageable);
+  List<TxEvent> findTimeoutEvents();
 
   @Query("SELECT t FROM TxEvent t "
       + "WHERE t.globalTxId = ?1 "
@@ -84,7 +85,9 @@ interface TxEventEnvelopeRepository extends CrudRepository<TxEvent, Long> {
   List<TxEvent> findIsGlobalAbortByGlobalTxId(String globalTxId);
 
   @Query("SELECT t FROM TxEvent t "
-      + "WHERE t.globalTxId = ?1 AND t.type = 'TxStartedEvent' AND EXISTS ( "
+      + "WHERE t.globalTxId = ?1 AND t.type = 'TxStartedEvent' "
+      + "AND t.findStatus = 0 "
+      + "AND EXISTS ( "
       + "  SELECT t1.globalTxId"
       + "  FROM TxEvent t1 "
       + "  WHERE t1.globalTxId = ?1 "
@@ -111,13 +114,4 @@ interface TxEventEnvelopeRepository extends CrudRepository<TxEvent, Long> {
       + ")")
   void deleteByType(String type);
 
-  @Transactional
-  @Query("UPDATE TxEvent t SET t.findStatus = true " +
-          "WHERE t.surrogateId = ?1")
-  void updateFindStatusTrue(long surrogateId);
-
-  @Transactional
-  @Query("UPDATE TxEvent t SET t.isTimeout = true " +
-          "WHERE t.surrogateId = ?1")
-  void updateIsTimeoutTrue(long surrogateId);
 }

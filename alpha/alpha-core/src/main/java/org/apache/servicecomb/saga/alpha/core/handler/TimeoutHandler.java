@@ -5,12 +5,8 @@ import org.apache.servicecomb.saga.alpha.core.TxEventRepository;
 import org.apache.servicecomb.saga.alpha.core.TxTimeout;
 import org.apache.servicecomb.saga.alpha.core.TxTimeoutRepository;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.BlockingDeque;
 
-
-import static org.apache.servicecomb.saga.common.EventType.SagaStartedEvent;
 import static org.apache.servicecomb.saga.common.EventType.TxAbortedEvent;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -50,20 +46,20 @@ public class TimeoutHandler extends Handler {
 
     @Override
     public void handle() {
-
         txEventRepository.findTimeoutEvents()
                 .forEach(event -> {
                     LOG.info("Found timeout event {}", event);
                     txTimeoutRepository.save(txTimeoutOf(event));
                     LOG.info("Saved timeout event {}", event);
 
+                    TxEvent abortEvent = abortEventOf(event);
                     if(event.type().equals(TxStartedEvent.name())){
-                        abortEventsDeque.add(setIsTimeout(abortEventOf(event)));
-                    }else{
-                        abortEventsDeque.add(abortEventOf(event));
+                        setIsTimeout(abortEvent);
                     }
+
+                    abortEventsDeque.add(abortEvent);
+                    txEventRepository.save(setIsTimeout(event));
                     LOG.info("Add timeout event into abortEventDeque {}", event);
-                    //txEventRepository.updateIsTimeoutTrue(event.id());
                 });
     }
 

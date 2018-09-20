@@ -37,7 +37,6 @@ public class CompensateEventHandler extends Handler {
     }
     @Override
     public void handle() {
-        System.out.println("CompensateEventHandler start");
         Command command = null;
         try {
             //if there are no elements ,it will block

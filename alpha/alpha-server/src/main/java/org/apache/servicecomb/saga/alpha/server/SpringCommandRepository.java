@@ -49,7 +49,6 @@ public class SpringCommandRepository implements CommandRepository {
     commandRepository.save(command);
   }
 
-
   @Override
   public void markCommandAsDone(String globalTxId, String localTxId) {
     commandRepository.updateStatusByGlobalTxIdAndLocalTxId(DONE.name(), globalTxId, localTxId);
@@ -61,6 +60,7 @@ public class SpringCommandRepository implements CommandRepository {
   }
 
   @Transactional
+  @Override
   public void updateStatusByGlobalTxIdAndLocalTxId(Command command,String from, String to){
     commandRepository.updateStatusByGlobalTxIdAndLocalTxId(
             NEW.name(),

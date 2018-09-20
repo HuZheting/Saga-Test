@@ -1,6 +1,5 @@
 package org.apache.servicecomb.saga.alpha.core.handler;
 
-import org.apache.servicecomb.saga.alpha.core.TxEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +15,4 @@ public abstract class Handler{
 
     public abstract void handle();
 
-    public void setScheduleInternal(int scheduleInternal) {
-        this.scheduleInternal = scheduleInternal;
-    }
 }

@@ -51,7 +51,6 @@ public class AbortEventHandler extends Handler {
 
     @Override
     public void handle() {
-        System.out.println("AbortEventHandler start");
         TxEvent event = null;
         try {
             event = abortEventsDeque.take();
@@ -60,7 +59,7 @@ public class AbortEventHandler extends Handler {
             txEventRepository.save(event);
             Handler.LOG.info("Save abort event {}", event);
 
-            if(event.isTimeout()){
+            if(1 == event.isTimeout()){
                 saveAndAddtoCommandsDeque(event);
                 LOG.info("Timeout event {} add to command", event);
             }
@@ -71,7 +70,7 @@ public class AbortEventHandler extends Handler {
                 findTxStartedEventsWithMatchingEndedButNotCompensatedEvents(event.globalTxId()).forEach(
                         e -> {
                             eventNeedCompensateWithoutDuplicateTxStartEvent.computeIfAbsent(e.localTxId(), k -> e);
-                            //txEventRepository.updateFindStatusTrue(e.id());
+                            txEventRepository.save(setFindStatusTrue(e));
                         }
                 );
 
@@ -102,5 +101,10 @@ public class AbortEventHandler extends Handler {
         commandRepository.save(command);
         commandsDeque.add(command);
         LOG.info("Add event to commandsDeque {}", event);
+    }
+
+    private TxEvent setFindStatusTrue(TxEvent event){
+        event.setFindStatusTrue();
+        return event;
     }
 }

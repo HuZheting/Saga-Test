@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS TxEvent (
   retryMethod varchar(256) NOT NULL,
   retries int DEFAULT 0 NOT NULL,
   payloads blob,
-  findStatus BOOLEAN DEFAULT FALSE,
-  isTimeout BOOLEAN DEFAULT FALSE
+  findStatus int DEFAULT 0,
+  isTimeout int DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS Command (
