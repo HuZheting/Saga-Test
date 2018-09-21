@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 
 interface TxEventEnvelopeRepository extends CrudRepository<TxEvent, Long> {
   List<TxEvent> findByGlobalTxId(String globalTxId);
@@ -113,5 +114,17 @@ interface TxEventEnvelopeRepository extends CrudRepository<TxEvent, Long> {
       + " GROUP BY t1.globalTxId"
       + ")")
   void deleteByType(String type);
+
+
+  @Transactional
+  @Modifying(clearAutomatically = true)
+  @Query("UPDATE TxEvent t SET t.isTimeout = 1 WHERE t.surrogateId = :surrogateId ")
+  void updateIsTimeoutBySurrogateId(@Param("surrogateId") long surrogateId);
+
+  @Transactional
+  @Modifying(clearAutomatically = true)
+  @Query("UPDATE TxEvent t SET t.findStatus = 1 WHERE t.surrogateId = :surrogateId ")
+  void updateFindStatusBySurrogateId(@Param("surrogateId") long surrogateId);
+
 
 }

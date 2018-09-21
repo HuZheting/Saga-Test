@@ -88,6 +88,16 @@ public class TxConsistentServiceTest {
       return emptyList();
     }
 
+    @Override
+    public void updateIsTimeoutBySurrogateId(long surrogateId) {
+
+    }
+
+    @Override
+    public void updateFindStatusBySurrogateId(long surrogateId) {
+
+    }
+
   };
 
   private final String globalTxId = UUID.randomUUID().toString();

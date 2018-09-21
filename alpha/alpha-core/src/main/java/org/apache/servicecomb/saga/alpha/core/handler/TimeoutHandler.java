@@ -58,8 +58,9 @@ public class TimeoutHandler extends Handler {
                     }
 
                     abortEventsDeque.add(abortEvent);
-                    txEventRepository.save(setIsTimeout(event));
                     LOG.info("Add timeout event into abortEventDeque {}", event);
+                    txEventRepository.updateIsTimeoutBySurrogateId(event.id());
+                    LOG.info("Update event {} is timeout event", event);
                 });
     }
 

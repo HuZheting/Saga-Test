@@ -74,4 +74,14 @@ class SpringTxEventRepository implements TxEventRepository {
     return eventRepo.findIsGlobalAbortByGlobalTxId(globalTxId);
   }
 
+  @Override
+  public void updateIsTimeoutBySurrogateId(long surrogateId) {
+    eventRepo.updateIsTimeoutBySurrogateId(surrogateId);
+  }
+
+  @Override
+  public void updateFindStatusBySurrogateId(long surrogateId) {
+    eventRepo.updateIsTimeoutBySurrogateId(surrogateId);
+  }
+
 }

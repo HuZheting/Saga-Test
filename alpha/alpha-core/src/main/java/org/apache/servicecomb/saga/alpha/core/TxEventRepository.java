@@ -99,4 +99,8 @@ public interface TxEventRepository {
 
   List<TxEvent> findIsGlobalAbortByGlobalTxId(String globalTxId);
 
+  void updateIsTimeoutBySurrogateId(long surrogateId);
+
+  void updateFindStatusBySurrogateId(long surrogateId);
+
 }

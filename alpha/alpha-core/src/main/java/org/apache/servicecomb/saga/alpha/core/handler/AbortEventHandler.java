@@ -70,7 +70,8 @@ public class AbortEventHandler extends Handler {
                 findTxStartedEventsWithMatchingEndedButNotCompensatedEvents(event.globalTxId()).forEach(
                         e -> {
                             eventNeedCompensateWithoutDuplicateTxStartEvent.computeIfAbsent(e.localTxId(), k -> e);
-                            txEventRepository.save(setFindStatusTrue(e));
+                            txEventRepository.updateFindStatusBySurrogateId(e.id());
+                            LOG.info("Update event {} has been finded.", e);
                         }
                 );
 
@@ -103,8 +104,4 @@ public class AbortEventHandler extends Handler {
         LOG.info("Add event to commandsDeque {}", event);
     }
 
-    private TxEvent setFindStatusTrue(TxEvent event){
-        event.setFindStatusTrue();
-        return event;
-    }
 }
