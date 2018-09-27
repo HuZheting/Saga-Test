@@ -83,7 +83,7 @@ public class AbortEventHandler extends Handler {
             }
         } catch (InterruptedException e) {
 
-            LOG.error("Take abort event fail. ", e);
+            LOG.error("Take abort event fail {} ", e);
             if (null != event) {
                 //if command has been stored, it wouldn't be stored repeated
                 abortEventsDeque.addFirst(event);
@@ -99,9 +99,15 @@ public class AbortEventHandler extends Handler {
 
     private void saveAndAddtoCommandsDeque(TxEvent event){
         Command command = new Command(event);
-        commandRepository.save(command);
-        commandsDeque.add(command);
-        LOG.info("Add event to commandsDeque {}", event);
+        try {
+            commandRepository.save(command);
+            LOG.info("Saved compensation command {}", command);
+            commandsDeque.add(command);
+            LOG.info("Add event to commandsDeque {}", event);
+        }
+        catch (Exception e){
+            LOG.error("Failed to save some command {}", command);
+        }
     }
 
 }

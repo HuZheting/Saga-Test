@@ -50,14 +50,17 @@ public class CompensateEventHandler extends Handler {
             commandRepository.updateStatusByGlobalTxIdAndLocalTxId(command,
                     TaskStatus.NEW.name(), TaskStatus.PENDING.name());
         } catch (InterruptedException e) {
-            LOG.error("Take uncompensate event fail. ", e);
+
             if (null != command) {
-                //if command has been stored, it wouldn't be stored repeated
+                LOG.error("Take uncompensate event fail {}", e);
                 commandsDeque.addFirst(command);
+            }
+            else{
+                LOG.error("Compensating transaction fail {}", command);
             }
             Thread.currentThread().interrupt();
         } catch(Exception e){
-            LOG.warn("CompensateEventHandler Fail :", e);
+            LOG.error("Compensating transaction fail {}", command);
         }
 
     }

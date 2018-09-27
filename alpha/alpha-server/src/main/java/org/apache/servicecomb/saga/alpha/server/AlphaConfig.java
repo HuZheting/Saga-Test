@@ -79,7 +79,7 @@ class AlphaConfig {
 
   @Bean
   TxConsistentService txConsistentService(
-      @Value("${alpha.event.pollingInterval:500}") int eventPollingInterval,
+      @Value("${alpha.event.pollingInterval:50}") int eventPollingInterval,
       GrpcServerConfig serverConfig,
       ScheduledExecutorService scheduler,
       TxEventRepository eventRepository,

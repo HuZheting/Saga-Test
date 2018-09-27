@@ -91,7 +91,8 @@ public class EventScanner implements Runnable {
 
   private void deleteDuplicateSagaEndedEvents() {
     try {
-      eventRepository.deleteDuplicateEvents(SagaEndedEvent.name());
+      // TODO: DEADLOCK
+      //eventRepository.deleteDuplicateEvents(SagaEndedEvent.name());
     } catch (Exception e) {
       LOG.warn("Failed to delete duplicate event", e);
     }
