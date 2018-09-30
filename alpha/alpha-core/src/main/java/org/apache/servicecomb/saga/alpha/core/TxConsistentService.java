@@ -31,6 +31,7 @@ public class TxConsistentService {
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private final TxEventRepository eventRepository;
+  private final CommandRepository commandRepository;
 
   private final List<String> types = Arrays.asList(TxStartedEvent.name(), SagaEndedEvent.name());
 
@@ -38,9 +39,11 @@ public class TxConsistentService {
   private BlockingDeque<Command> commandsDeque;
 
   public TxConsistentService(TxEventRepository eventRepository,
+                             CommandRepository commandRepository,
                              BlockingDeque<TxEvent> abortEventsDeque,
                              BlockingDeque<Command> commandsDeque) {
     this.eventRepository = eventRepository;
+    this.commandRepository = commandRepository;
     this.abortEventsDeque = abortEventsDeque;
     this.commandsDeque = commandsDeque;
   }
@@ -57,8 +60,8 @@ public class TxConsistentService {
     }
     else{
         if(event.type().equals(TxEndedEvent.name()) && isGlobalTxAbortedAndRetriesIsZero(event.globalTxId())){
-            LOG.info("Find Uncompensate TxEndedEvent!");
-            commandsDeque.add(new Command(event));
+            LOG.info("Find uncompensated TxEndedEvent {} ", event);
+            saveAndAddtoCommandsDeque(event);
         }
         eventRepository.save(event);
     }
@@ -72,5 +75,18 @@ public class TxConsistentService {
 
   private boolean isGlobalTxAbortedAndRetriesIsZero(String globalTxId){
     return !eventRepository.findIsGlobalAbortByGlobalTxId(globalTxId).isEmpty();
+  }
+
+  private void saveAndAddtoCommandsDeque(TxEvent event){
+    Command command = new Command(event);
+    try {
+      commandRepository.save(command);
+      LOG.info("Saved compensation command {}", command);
+      commandsDeque.add(command);
+      LOG.info("Add event to commandsDeque {}", event);
+    }
+    catch (Exception e){
+      LOG.error("Failed to save some command {}", command);
+    }
   }
 }

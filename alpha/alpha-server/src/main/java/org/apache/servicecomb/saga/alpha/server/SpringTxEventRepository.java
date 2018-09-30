@@ -81,7 +81,7 @@ class SpringTxEventRepository implements TxEventRepository {
 
   @Override
   public void updateFindStatusBySurrogateId(long surrogateId) {
-    eventRepo.updateIsTimeoutBySurrogateId(surrogateId);
+    eventRepo.updateFindStatusBySurrogateId(surrogateId);
   }
 
 }
