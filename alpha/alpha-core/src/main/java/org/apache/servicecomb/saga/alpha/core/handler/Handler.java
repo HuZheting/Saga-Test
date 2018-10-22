@@ -11,7 +11,7 @@ public abstract class Handler{
 
     static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    int scheduleInternal = 5;
+    int scheduleInternal = 50;
 
     public abstract void handle();
 

@@ -99,6 +99,27 @@ public class TxConsistentServiceTest {
     }
 
   };
+  private CommandRepository commandRepository = new CommandRepository() {
+    @Override
+    public void markCommandAsDone(String globalTxId, String localTxId) {
+
+    }
+
+    @Override
+    public List<Command> findUncompletedCommands(String globalTxId) {
+      return null;
+    }
+
+    @Override
+    public void save(Command command) {
+
+    }
+
+    @Override
+    public void updateStatusByGlobalTxIdAndLocalTxId(Command command, String from, String to) {
+
+    }
+  };
 
   private final String globalTxId = UUID.randomUUID().toString();
   private final String localTxId = UUID.randomUUID().toString();
@@ -108,7 +129,7 @@ public class TxConsistentServiceTest {
 
   private final String compensationMethod = getClass().getCanonicalName();
 
-  private final TxConsistentService consistentService = new TxConsistentService(eventRepository, abortEventsDeque, commandsDeque);
+  private final TxConsistentService consistentService = new TxConsistentService(eventRepository, commandRepository, abortEventsDeque, commandsDeque);
   private final byte[] payloads = "yeah".getBytes();
 
   @Before

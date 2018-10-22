@@ -59,15 +59,16 @@ public class TxConsistentService {
       abortEventsDeque.add(event);
     }
     else{
-        if(event.type().equals(TxEndedEvent.name()) && isGlobalTxAbortedAndRetriesIsZero(event.globalTxId())){
-            LOG.info("Find uncompensated TxEndedEvent {} ", event);
-            saveAndAddtoCommandsDeque(event);
-        }
-        eventRepository.save(event);
+      eventRepository.save(event);
+      if(event.type().equals(TxEndedEvent.name())
+              && isGlobalTxAbortedAndRetriesIsZero(event.globalTxId())){
+        LOG.info("Find uncompensated TxEndedEvent {} ", event);
+        saveAndAddtoCommandsDeque(event);
+      }
     }
-
     return true;
   }
+
 
   private boolean isGlobalTxAborted(TxEvent event) {
     return !eventRepository.findTransactions(event.globalTxId(), TxAbortedEvent.name()).isEmpty();

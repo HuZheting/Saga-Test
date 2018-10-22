@@ -88,7 +88,7 @@ class AlphaConfig {
       OmegaCallback omegaCallback,
       Map<String, Map<String, OmegaCallback>> omegaCallbacks) {
 
-    new AbortEventHandler(abortEventsDeque, commandsDeque, eventRepository, commandRepository, timeoutRepository).run();
+    new AbortEventHandler(abortEventsDeque, commandsDeque, eventRepository, commandRepository).run();
     new TimeoutHandler(abortEventsDeque, timeoutRepository, eventRepository).run();
     new CompensateEventHandler(commandsDeque, commandRepository, omegaCallback).run();
 

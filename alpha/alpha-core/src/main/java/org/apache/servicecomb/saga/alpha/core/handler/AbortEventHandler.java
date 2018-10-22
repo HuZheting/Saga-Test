@@ -21,19 +21,16 @@ public class AbortEventHandler extends Handler {
     private BlockingDeque<Command> commandsDeque;
     private TxEventRepository txEventRepository;
     private CommandRepository commandRepository;
-    private TxTimeoutRepository txTimeoutRepository;
 
 
     public AbortEventHandler(BlockingDeque<TxEvent> abortEventsDeque,
                              BlockingDeque<Command> commandsDeque,
                              TxEventRepository txEventRepository,
-                             CommandRepository commandRepository,
-                             TxTimeoutRepository txTimeoutRepository){
+                             CommandRepository commandRepository){
         this.abortEventsDeque = abortEventsDeque;
         this.commandsDeque = commandsDeque;
         this.txEventRepository = txEventRepository;
         this.commandRepository = commandRepository;
-        this.txTimeoutRepository = txTimeoutRepository;
     }
 
     public void run(){
@@ -57,7 +54,7 @@ public class AbortEventHandler extends Handler {
             LOG.info("From abortEventsDeque get a abort event {}", event);
 
             txEventRepository.save(event);
-            Handler.LOG.info("Save abort event {}", event);
+            LOG.info("Save abort event {}", event);
 
             if(1 == event.isTimeout()){
                 saveAndAddtoCommandsDeque(event);

@@ -32,7 +32,6 @@ public class TimeoutHandler extends Handler {
         this.txEventRepository = txEventRepository;
     }
 
-    //TODO : thread
     public void run(){
         scheduler.scheduleWithFixedDelay(
                 ()->{
@@ -48,19 +47,23 @@ public class TimeoutHandler extends Handler {
     public void handle() {
         txEventRepository.findTimeoutEvents()
                 .forEach(event -> {
-                    LOG.info("Found timeout event {}", event);
-                    txTimeoutRepository.save(txTimeoutOf(event));
-                    LOG.info("Saved timeout event {}", event);
+                    try {
+                        LOG.info("Found timeout event {}", event);
+                        txTimeoutRepository.save(txTimeoutOf(event));
+                        LOG.info("Saved timeout event {}", event);
 
-                    TxEvent abortEvent = abortEventOf(event);
-                    if(event.type().equals(TxStartedEvent.name())){
-                        setIsTimeout(abortEvent);
+                        TxEvent abortEvent = abortEventOf(event);
+                        if (event.type().equals(TxStartedEvent.name())) {
+                            setIsTimeout(abortEvent);
+                        }
+                        txEventRepository.updateIsTimeoutBySurrogateId(event.id());
+                        LOG.info("Update event {} is timeout event", event);
+                        abortEventsDeque.add(abortEvent);
+                        LOG.info("Add timeout event into abortEventDeque {}", event);
                     }
-
-                    abortEventsDeque.add(abortEvent);
-                    LOG.info("Add timeout event into abortEventDeque {}", event);
-                    txEventRepository.updateIsTimeoutBySurrogateId(event.id());
-                    LOG.info("Update event {} is timeout event", event);
+                    catch(Exception e){
+                        LOG.info("Fail to save timeou event {}", event);
+                    }
                 });
     }
 
