@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS TxEvent (
   findStatus tinyint DEFAULT '0',
   isTimeout tinyint DEFAULT '0',
   PRIMARY KEY (surrogateId),
-  INDEX saga_events_index (surrogateId, globalTxId, localTxId, type, expiryTime, findStatus, isTimeout),
+  INDEX saga_events_index (surrogateId, globalTxId, localTxId, type, expiryTime),
   INDEX saga_global_tx_index (globalTxId)
 ) DEFAULT CHARSET=utf8;
 

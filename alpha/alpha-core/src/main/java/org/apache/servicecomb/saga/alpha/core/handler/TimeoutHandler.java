@@ -23,7 +23,7 @@ public class TimeoutHandler extends Handler {
     private TxTimeoutRepository txTimeoutRepository;
     private TxEventRepository txEventRepository;
     private BlockingDeque<TxEvent> abortEventsDeque;
-
+    private static int count = 0;
     public TimeoutHandler(BlockingDeque<TxEvent> abortEventsDeque,
                           TxTimeoutRepository txTimeoutRepository,
                           TxEventRepository txEventRepository){
@@ -62,7 +62,7 @@ public class TimeoutHandler extends Handler {
                         LOG.info("Add timeout event into abortEventDeque {}", event);
                     }
                     catch(Exception e){
-                        LOG.info("Fail to save timeou event {}", event);
+                        LOG.info("Fail to save timeout event {}", event);
                     }
                 });
     }
